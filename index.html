@@ -529,9 +529,7 @@ function commitSale(t,r){
 }
 function revealHTML(t,r){
   const groups={};r.items.forEach(p=>{groups[p.id]=groups[p.id]||{p,n:0};groups[p.id].n++});
-  return `<div class="worth">มูลค่าในกล่อง <strong class="num">${baht(r.value)}</strong> บาท
-      <div class="muted" style="font-size:.85rem">จ่ายไป ${baht(t.price)} บาท · คุ้มขึ้น ${baht(r.value-t.price)} บาท</div></div>
-    <div class="reveal">${Object.values(groups).map((g,i)=>`
+  return `<div class="reveal">${Object.values(groups).map((g,i)=>`
       <div class="item card2" style="animation-delay:${i*.12}s" aria-label="ราคา ${baht(g.p.price)} บาท">
         ${g.n>1?`<span class="qty num">×${g.n}</span>`:''}
         ${chipHTML(g.p)}
