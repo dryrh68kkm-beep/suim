@@ -558,7 +558,7 @@ function pileHTML(id){
   return `<div class="pile" style="${st}"><img class="bbody" src="${P.body}" alt="กล่อง ${id}"><div class="binner"></div><div class="bglow"></div><img class="blid" src="${P.lid}" alt=""><img class="btag" src="${P.tag}" alt=""></div><div class="burst"></div>`;
 }
 let cTier=null,cBusy=false,cTimer=null,cAvail={};
-const pillHTML=t=>`<div class="tpill" style="--c:${look(t.id).c}"><span class="lt">${t.id}</span><span class="tx"><b class="num">${baht(t.price)} บาท</b><span>${cAvail[t.id]?`${t.minItems}–${t.maxItems} ชิ้น`:'หมดชั่วคราว'}</span></span></div>`;
+const pillHTML=t=>`<div class="tpill" style="--c:${look(t.id).c}"><span class="lt">${t.id}</span><span class="tx"><b class="num">${baht(t.price)} บาท</b>${cAvail[t.id]?'':'<span>หมดชั่วคราว</span>'}</span></div>`;
 function renderCust(){
   const sm=liveStock();
   state.tiers.forEach(t=>cAvail[t.id]=!!draw(t,sm,400));
