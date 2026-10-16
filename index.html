@@ -1,0 +1,473 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="กล่องสุ่มขนม">
+<meta name="theme-color" content="#b3361f">
+<style>
+html,body{height:100%}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;font:14px/1.5 system-ui,sans-serif}
+img{max-width:100%}
+[hidden]{display:none!important}
+</style>
+<title>กล่องสุ่มขนมร้านชำ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;500;600&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap">
+<style>
+/* Layout: แถบแท็บบนสุด + การ์ดเรียงคอลัมน์เดียวบนมือถือ, หน้าร้านเป็นเวทีกล่องตรงกลาง */
+:root{
+  --bg:#fbf6ec; --paper:#ffffff; --ink:#2b1d14; --muted:#7a6656; --line:#eadfcc;
+  --tamarind:#b3361f; --mustard:#e8a317; --leaf:#2f7d4f; --soft:#f4e8d3;
+  --s:#2f7d4f; --m:#d4860b; --l:#b3361f;
+  --display:"Mitr","Noto Sans Thai",system-ui,sans-serif;
+  --body:"IBM Plex Sans Thai","Noto Sans Thai",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#1d1611; --paper:#2a211a; --ink:#f6ead9; --muted:#bba68f; --line:#3f3226;
+  --tamarind:#f06a4f; --mustard:#f2b83a; --leaf:#5cc086; --soft:#352a20;
+  --s:#5cc086; --m:#f2b83a; --l:#f06a4f; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#1d1611; --paper:#2a211a; --ink:#f6ead9; --muted:#bba68f; --line:#3f3226;
+  --tamarind:#f06a4f; --mustard:#f2b83a; --leaf:#5cc086; --soft:#352a20;
+  --s:#5cc086; --m:#f2b83a; --l:#f06a4f; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.55}
+.wrap{max-width:760px;margin:0 auto;padding-block:12px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--display);font-weight:500;margin:0;text-wrap:balance}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:6px 12px}
+.brand{font-family:var(--display);font-size:1.35rem;font-weight:600;color:var(--tamarind)}
+.brand small{display:block;font-family:var(--body);font-size:.78rem;color:var(--muted);font-weight:400}
+nav{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:14px}
+nav button{flex:0 0 auto;border:1px solid var(--line);background:var(--paper);color:var(--ink);font:500 .92rem var(--display);padding:8px 14px;border-radius:999px;cursor:pointer}
+nav button[aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+button{font-family:inherit}
+button:focus-visible,input:focus-visible{outline:3px solid var(--mustard);outline-offset:2px}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:16px}
+.stack{display:flex;flex-direction:column;gap:14px}
+.muted{color:var(--muted)}
+.btn{border:0;border-radius:10px;padding:10px 16px;font:500 .95rem var(--display);cursor:pointer;background:var(--tamarind);color:#fff}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn.small{padding:6px 10px;font-size:.85rem}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.num{font-variant-numeric:tabular-nums}
+
+/* Stage */
+.tiers{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.tier{border:2px solid var(--line);background:var(--paper);border-radius:14px;padding:12px 8px;text-align:center;cursor:pointer;color:var(--ink)}
+.tier[aria-pressed="true"]{border-color:var(--c);background:var(--soft)}
+.tier .sz{font:600 1.6rem var(--display);color:var(--c)}
+.tier .pr{font:500 1.05rem var(--display)}
+.tier .ds{font-size:.75rem;color:var(--muted)}
+.stage{display:flex;flex-direction:column;align-items:center;gap:14px;padding:22px 12px}
+.boxwrap{width:190px;max-width:100%;aspect-ratio:1/1;position:relative;cursor:pointer}
+.box{position:absolute;inset:18% 6% 0 6%;background:var(--c,var(--tamarind));border-radius:10px;
+  background-image:repeating-linear-gradient(90deg,transparent 0 42%,rgba(255,255,255,.22) 42% 58%,transparent 58% 100%)}
+.lid{position:absolute;left:0;right:0;top:6%;height:20%;background:var(--c,var(--tamarind));filter:brightness(.85);border-radius:8px;transform-origin:10% 100%;transition:transform .5s cubic-bezier(.3,1.6,.5,1)}
+.qm{position:absolute;inset:30% 0 0 0;display:grid;place-items:center;font:600 4rem var(--display);color:rgba(255,255,255,.9)}
+.boxwrap.shake .box,.boxwrap.shake .lid{animation:shake .12s linear infinite}
+.boxwrap.open .lid{transform:rotate(-55deg) translate(-8px,-18px)}
+@keyframes shake{0%{transform:translateX(-4px) rotate(-2deg)}50%{transform:translateX(4px) rotate(2deg)}100%{transform:translateX(-4px) rotate(-2deg)}}
+@media (prefers-reduced-motion:reduce){.boxwrap.shake .box,.boxwrap.shake .lid{animation:none}.lid{transition:none}}
+.reveal{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;width:100%}
+.item{display:flex;gap:10px;align-items:center;background:var(--soft);border-radius:12px;padding:10px;opacity:0;transform:translateY(10px);animation:pop .4s forwards}
+@keyframes pop{to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.item{animation:none;opacity:1;transform:none}}
+.chip{flex:0 0 38px;height:38px;border-radius:10px;display:grid;place-items:center;font:600 1rem var(--display);color:#fff}
+.item b{display:block;font-weight:500;font-size:.9rem;line-height:1.3}
+.item span{font-size:.8rem;color:var(--muted)}
+.worth{font:500 1.1rem var(--display);text-align:center}
+.worth strong{color:var(--leaf);font-size:1.4rem}
+
+/* Tables / forms */
+.rows{display:flex;flex-direction:column}
+.row{display:grid;grid-template-columns:38px 1fr auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:0}
+.row .nm{min-width:0}
+.row .nm b{font-weight:500;display:block;overflow-wrap:anywhere}
+.row .nm span{font-size:.8rem;color:var(--muted)}
+.stock{display:flex;align-items:center;gap:6px}
+.stock button{width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer;font-size:1rem}
+.pill{font-size:.72rem;padding:2px 8px;border-radius:999px;background:var(--soft);color:var(--muted)}
+.pill.low{background:var(--tamarind);color:#fff}
+.form{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.form .full{grid-column:1/-1}
+label{display:flex;flex-direction:column;gap:4px;font-size:.8rem;color:var(--muted);letter-spacing:.01em}
+input{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 10px;width:100%;min-width:0}
+.tierset{border-left:5px solid var(--c);padding-left:12px}
+.tierset .form{grid-template-columns:repeat(3,1fr)}
+@media (max-width:460px){.tierset .form{grid-template-columns:repeat(2,1fr)}}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.stat{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px}
+.stat .v{font:500 1.3rem var(--display)}
+.stat .k{font-size:.75rem;color:var(--muted)}
+.note{font-size:.82rem;padding:8px 10px;border-radius:8px;background:var(--soft)}
+.note.bad{background:var(--tamarind);color:#fff}
+.note.good{background:var(--leaf);color:#fff}
+.hist{font-size:.85rem}
+.hist .row{grid-template-columns:auto 1fr auto}
+.tag{font:600 .85rem var(--display);width:30px;height:30px;border-radius:8px;display:grid;place-items:center;color:#fff;background:var(--c)}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:.9rem;z-index:20}
+.confirm{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+/* ---------- หน้าลูกค้า ---------- */
+body.kiosk .wrap{display:none}
+.cust{min-height:100%;display:flex;flex-direction:column;align-items:center;gap:18px;text-align:center;
+  padding-block:20px 32px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  background:radial-gradient(120% 60% at 50% 0%,var(--soft),var(--bg) 70%)}
+.cust-in{width:100%;max-width:560px;display:flex;flex-direction:column;align-items:center;gap:18px}
+.cust-head{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;cursor:default}
+.cust-head h1{font-size:clamp(1.7rem,7vw,2.4rem);font-weight:600;color:var(--tamarind);line-height:1.2}
+.cust-head p{margin:4px 0 0;color:var(--muted)}
+.ctiers{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%}
+.ctier{border:3px solid var(--line);background:var(--paper);border-radius:18px;padding:14px 6px;cursor:pointer;color:var(--ink);display:flex;flex-direction:column;align-items:center;gap:2px}
+.ctier[aria-pressed="true"]{border-color:var(--c);background:var(--soft);transform:translateY(-3px)}
+.ctier:disabled{opacity:.4;cursor:not-allowed}
+.ctier .sz{font:600 2.2rem var(--display);color:var(--c);line-height:1}
+.ctier .pr{font:500 1.15rem var(--display)}
+.ctier .ds{font-size:.75rem;color:var(--muted)}
+.cust .boxwrap{width:min(240px,62vw)}
+.bigbtn{font:600 1.35rem var(--display);padding:16px 44px;border-radius:999px;border:0;cursor:pointer;background:var(--tamarind);color:#fff;box-shadow:0 6px 0 color-mix(in srgb,var(--tamarind) 60%,#000)}
+.bigbtn:active{transform:translateY(4px);box-shadow:0 2px 0 color-mix(in srgb,var(--tamarind) 60%,#000)}
+.bigbtn:disabled{opacity:.5;cursor:not-allowed}
+.cust .reveal{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));text-align:left}
+.cust-foot{font-size:.75rem;color:var(--muted)}
+.pinbox{display:flex;flex-direction:column;gap:10px;align-items:center;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:16px;width:100%;max-width:300px}
+.pinbox input{text-align:center;font:500 1.4rem var(--display);letter-spacing:.4em}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="brand">กล่องสุ่มขนม<small id="shopName">หลังร้าน · สำหรับพนักงาน</small></div>
+    <button class="btn small adm" id="kioskBtn">เปิดหน้าลูกค้า</button>
+  </div>
+  <nav role="tablist">
+    <button role="tab" data-tab="stock" aria-selected="true">สต็อกขนม</button>
+    <button role="tab" data-tab="tiers" aria-selected="false">ตั้งค่ากล่อง</button>
+    <button role="tab" data-tab="hist" aria-selected="false">ยอดขาย</button>
+  </nav>
+
+  <!-- สต็อก -->
+  <section id="tab-stock" class="stack">
+    <div class="card stack">
+      <h3>เพิ่มขนม</h3>
+      <form class="form" id="addForm">
+        <label class="full">ชื่อสินค้า<input id="fName" required placeholder="เช่น ปลาเส้นทาโร่"></label>
+        <label>ราคาขาย (บาท)<input id="fPrice" type="number" step="0.25" min="0" inputmode="decimal" required></label>
+        <label>ต้นทุน (บาท)<input id="fCost" type="number" step="0.25" min="0" inputmode="decimal" required></label>
+        <label>จำนวนในสต็อก<input id="fStock" type="number" min="0" inputmode="numeric" required></label>
+        <label>&nbsp;<button class="btn" type="submit">เพิ่มเข้าสต็อก</button></label>
+      </form>
+    </div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap">
+        <h3>ขนมในสต็อก</h3><span class="muted num" id="stockSum"></span>
+      </div>
+      <div class="rows" id="stockList"></div>
+    </div>
+  </section>
+
+  <!-- ตั้งค่ากล่อง -->
+  <section id="tab-tiers" class="stack" hidden>
+    <p class="muted" style="margin:0">ระบบจะสุ่มขนมให้มูลค่ารวม (ราคาขายปลีก) ไม่ต่ำกว่าที่ตั้งไว้ และต้นทุนรวมไม่เกินเพดาน เพื่อให้ลูกค้าคุ้มและร้านยังมีกำไร</p>
+    <div id="tierForms" class="stack"></div>
+    <div class="card stack">
+      <h3>หน้าลูกค้า</h3>
+      <p class="muted" style="margin:0;font-size:.85rem">ลูกค้าจะเห็นแค่การเลือกกล่องกับปุ่มสุ่ม ถ้าจะกลับมาหน้าหลังร้าน ให้กดค้างที่หัวข้อ "ลุ้นกล่องสุ่มขนม" 2 วินาที แล้วใส่รหัสด้านล่าง</p>
+      <div class="form">
+        <label>รหัสออกจากหน้าลูกค้า (4 หลัก)<input id="pinSet" type="text" inputmode="numeric" maxlength="4" pattern="[0-9]{4}"></label>
+        <label>&nbsp;<button class="btn" id="openCust" type="button">เปิดหน้าลูกค้า</button></label>
+      </div>
+    </div>
+  </section>
+
+  <!-- ยอดขาย -->
+  <section id="tab-hist" class="stack" hidden>
+    <div class="stats" id="stats"></div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+        <h3>กล่องที่ขายไปล่าสุด</h3>
+        <div class="confirm" id="clearArea"><button class="btn small ghost" id="clearBtn">ล้างประวัติ</button></div>
+      </div>
+      <div class="rows hist" id="histList"></div>
+    </div>
+  </section>
+</div>
+
+<!-- หน้าลูกค้า -->
+<div class="cust" id="cust" hidden>
+  <div class="cust-in">
+    <div class="cust-head" id="custHead">
+      <h1>ลุ้นกล่องสุ่มขนม</h1>
+      <p>เลือกขนาดกล่อง แล้วกดสุ่มได้เลย ทุกกล่องได้ของเกินราคา</p>
+    </div>
+    <div class="ctiers" id="cTiers"></div>
+    <div class="boxwrap" id="cBox" aria-hidden="true">
+      <div class="box"></div><div class="lid"></div><div class="qm">?</div>
+    </div>
+    <button class="bigbtn" id="cDraw">สุ่มเลย!</button>
+    <div id="cResult" class="stack" style="width:100%"></div>
+    <div id="cPin"></div>
+    <div class="cust-foot">ชำระเงินที่แคชเชียร์ก่อนกดสุ่ม</div>
+  </div>
+</div>
+
+<script>
+const KEY='snackbox.v1';
+const COLORS=['#b3361f','#2f7d4f','#d4860b','#6a4c93','#1f6f8b','#a8431a','#8a7a1b','#c2185b'];
+const SAMPLE={
+  products:[
+    {id:1,name:'ปลาเส้นทาโร่',price:10,cost:7.75,stock:24},
+    {id:2,name:'เลย์ รสโนริสาหร่าย',price:20,cost:16,stock:12},
+    {id:3,name:'ป๊อกกี้ช็อกโกแลต',price:20,cost:15.5,stock:10},
+    {id:4,name:'เถ้าแก่น้อย',price:20,cost:15,stock:8},
+    {id:5,name:'มาม่าต้มยำกุ้ง',price:7,cost:5.6,stock:30},
+    {id:6,name:'ฟันโอ',price:10,cost:8,stock:20},
+    {id:7,name:'ลูกอมฮาลส์',price:12,cost:9.25,stock:15},
+    {id:8,name:'ปาปริก้า',price:5,cost:3.9,stock:40},
+    {id:9,name:'ขนมปังกรอบ',price:15,cost:11,stock:10},
+    {id:10,name:'นมเปรี้ยวยาคูลท์',price:10,cost:8.2,stock:6}
+  ],
+  tiers:[
+    {id:'S',price:29,minItems:2,maxItems:4,minValue:32,maxValue:40,maxCost:26},
+    {id:'M',price:59,minItems:3,maxItems:6,minValue:66,maxValue:80,maxCost:53},
+    {id:'L',price:99,minItems:5,maxItems:8,minValue:112,maxValue:135,maxCost:89}
+  ],
+  sales:[]
+};
+let state;
+try{state=JSON.parse(localStorage.getItem(KEY))}catch(e){}
+if(!state||!state.products)state=JSON.parse(JSON.stringify(SAMPLE));
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}};
+const $=s=>document.querySelector(s);
+const baht=n=>(Math.round(n*100)/100).toLocaleString('th-TH',{minimumFractionDigits:0,maximumFractionDigits:2});
+const tierColor=id=>`var(--${id.toLowerCase()})`;
+const colorFor=p=>COLORS[p.id%COLORS.length];
+const initial=s=>s.trim().charAt(0);
+
+function toast(t){const d=document.createElement('div');d.className='toast';d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),2200)}
+
+/* ---------- เครื่องสุ่ม ---------- */
+function tryBuild(t,stockMap){
+  const pool=state.products.filter(p=>(stockMap[p.id]||0)>0 && p.price<=t.maxValue);
+  if(!pool.length)return null;
+  const n=t.minItems+Math.floor(Math.random()*(t.maxItems-t.minItems+1));
+  const used={},items=[];let v=0,c=0;
+  for(let i=0;i<n*4&&items.length<n;i++){
+    const p=pool[Math.floor(Math.random()*pool.length)];
+    const u=used[p.id]||0;
+    if(u>=2||u>=stockMap[p.id])continue;
+    if(v+p.price>t.maxValue||c+p.cost>t.maxCost)continue;
+    used[p.id]=u+1;items.push(p);v+=p.price;c+=p.cost;
+  }
+  if(items.length<t.minItems||v<t.minValue||v>t.maxValue||c>t.maxCost)return null;
+  return {items,value:v,cost:c};
+}
+function draw(t,stockMap,tries=1500){
+  for(let i=0;i<tries;i++){const r=tryBuild(t,stockMap);if(r)return r}
+  return null;
+}
+const liveStock=()=>Object.fromEntries(state.products.map(p=>[p.id,p.stock]));
+
+
+/* ---------- สต็อก ---------- */
+function renderStock(){
+  const ps=state.products;
+  $('#stockSum').textContent=`${ps.length} รายการ · ${ps.reduce((a,p)=>a+p.stock,0)} ชิ้น`;
+  $('#stockList').innerHTML=ps.length?ps.map(p=>{
+    const m=p.price?Math.round((1-p.cost/p.price)*100):0;
+    return `<div class="row">
+      <div class="chip" style="background:${colorFor(p)}">${initial(p.name)}</div>
+      <div class="nm"><b>${p.name}</b><span class="num">ขาย ${baht(p.price)} · ทุน ${baht(p.cost)} · กำไร ${m}%</span>
+        ${p.stock<=3?' <span class="pill low">ใกล้หมด</span>':''}</div>
+      <div class="stock">
+        <button data-a="dec" data-id="${p.id}" aria-label="ลด">−</button>
+        <span class="num" style="min-width:2ch;text-align:center">${p.stock}</span>
+        <button data-a="inc" data-id="${p.id}" aria-label="เพิ่ม">+</button>
+        <button data-a="del" data-id="${p.id}" aria-label="ลบ" title="ลบ">×</button>
+      </div></div>`}).join(''):'<p class="muted">ยังไม่มีขนม เพิ่มรายการแรกจากฟอร์มด้านบน</p>';
+}
+let pendingDel=null;
+$('#stockList').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;
+  const p=state.products.find(x=>x.id==b.dataset.id);
+  if(b.dataset.a==='inc')p.stock++;
+  if(b.dataset.a==='dec')p.stock=Math.max(0,p.stock-1);
+  if(b.dataset.a==='del'){
+    if(pendingDel!==p.id){pendingDel=p.id;toast(`แตะ × อีกครั้งเพื่อลบ "${p.name}"`);setTimeout(()=>pendingDel=null,3000);return}
+    state.products=state.products.filter(x=>x.id!==p.id);pendingDel=null;toast('ลบแล้ว');
+  }
+  save();renderAll();
+});
+$('#addForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  const id=Math.max(0,...state.products.map(p=>p.id))+1;
+  state.products.push({id,name:$('#fName').value.trim(),price:+$('#fPrice').value,cost:+$('#fCost').value,stock:+$('#fStock').value});
+  save();e.target.reset();renderAll();toast('เพิ่มเข้าสต็อกแล้ว');
+});
+
+/* ---------- ตั้งค่ากล่อง ---------- */
+const F=[['price','ราคาขาย'],['minItems','ชิ้นต่ำสุด'],['maxItems','ชิ้นสูงสุด'],['minValue','มูลค่าขั้นต่ำ'],['maxValue','มูลค่าสูงสุด'],['maxCost','เพดานต้นทุน']];
+function renderTiers(){
+  $('#tierForms').innerHTML=state.tiers.map(t=>`
+    <div class="card stack tierset" style="--c:${tierColor(t.id)}">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap">
+        <h3>กล่อง ${t.id}</h3>
+        <span class="muted num" style="font-size:.85rem">กำไรขั้นต่ำต่อกล่อง ${baht(t.price-t.maxCost)} บาท</span>
+      </div>
+      <div class="form">${F.map(([k,l])=>`<label>${l}<input id="t-${t.id}-${k}" type="number" step="${k.includes('Items')?1:0.5}" min="0" inputmode="decimal" value="${t[k]}" data-t="${t.id}" data-k="${k}"></label>`).join('')}</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <button class="btn small ghost" data-test="${t.id}">ทดลองสุ่ม 200 ครั้ง</button>
+        <span class="muted" style="font-size:.8rem">ไม่ตัดสต็อก</span>
+      </div>
+      <div id="test-${t.id}"></div>
+    </div>`).join('');
+}
+$('#tierForms').addEventListener('change',e=>{
+  const i=e.target;if(!i.dataset.k)return;
+  const t=state.tiers.find(x=>x.id===i.dataset.t);t[i.dataset.k]=+i.value;
+  if(t.maxItems<t.minItems)t.maxItems=t.minItems;
+  save();
+  i.closest('.tierset').querySelector('.muted.num').textContent=`กำไรขั้นต่ำต่อกล่อง ${baht(t.price-t.maxCost)} บาท`;
+});
+$('#tierForms').addEventListener('click',e=>{
+  const b=e.target.closest('[data-test]');if(!b)return;
+  const t=state.tiers.find(x=>x.id===b.dataset.test);
+  let ok=0,v=0,c=0;
+  for(let i=0;i<200;i++){const r=draw(t,liveStock(),300);if(r){ok++;v+=r.value;c+=r.cost}}
+  const out=$('#test-'+t.id);
+  if(!ok){out.innerHTML='<div class="note bad">สุ่มไม่สำเร็จเลย เงื่อนไขขัดกัน ลองลดมูลค่าขั้นต่ำ เพิ่มเพดานต้นทุน หรือเพิ่มขนมราคาถูก</div>';return}
+  const pct=Math.round(ok/2);
+  out.innerHTML=`<div class="note ${pct>=90?'good':pct<60?'bad':''} num">สำเร็จ ${pct}% · มูลค่าเฉลี่ย ${baht(v/ok)} บาท · ต้นทุนเฉลี่ย ${baht(c/ok)} บาท · กำไรเฉลี่ย ${baht(t.price-c/ok)} บาท/กล่อง</div>`;
+});
+
+/* ---------- ยอดขาย ---------- */
+function renderHist(){
+  const today=new Date().toDateString();
+  const td=state.sales.filter(s=>new Date(s.t).toDateString()===today);
+  const rev=td.reduce((a,s)=>a+s.price,0),prof=td.reduce((a,s)=>a+s.price-s.cost,0);
+  $('#stats').innerHTML=[['กล่องวันนี้',td.length],['ยอดขายวันนี้',baht(rev)+' ฿'],['กำไรวันนี้',baht(prof)+' ฿']]
+    .map(([k,v])=>`<div class="stat"><div class="v num">${v}</div><div class="k">${k}</div></div>`).join('');
+  $('#histList').innerHTML=state.sales.length?state.sales.slice(0,50).map(s=>`
+    <div class="row">
+      <div class="tag" style="--c:${tierColor(s.tier)}">${s.tier}</div>
+      <div class="nm"><b style="font-weight:400">${s.items.join(', ')}</b>
+        <span class="num">${new Date(s.t).toLocaleString('th-TH',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})} · มูลค่า ${baht(s.value)} · ทุน ${baht(s.cost)}</span></div>
+      <div class="num" style="text-align:right">+${baht(s.price-s.cost)}</div>
+    </div>`).join(''):'<p class="muted">ยังไม่มีการขาย เมื่อลูกค้าเปิดกล่องที่หน้าร้าน รายการจะขึ้นที่นี่</p>';
+}
+$('#clearArea').addEventListener('click',e=>{
+  const a=$('#clearArea');
+  if(e.target.id==='clearBtn')a.innerHTML='<span class="muted" style="font-size:.85rem">ลบประวัติทั้งหมด?</span><button class="btn small" id="yesClr">ลบ</button><button class="btn small ghost" id="noClr">ยกเลิก</button>';
+  if(e.target.id==='yesClr'){state.sales=[];save();renderAll();toast('ล้างประวัติแล้ว')}
+  if(e.target.id==='yesClr'||e.target.id==='noClr')a.innerHTML='<button class="btn small ghost" id="clearBtn">ล้างประวัติ</button>';
+});
+
+/* ---------- แท็บ / โหมดลูกค้า ---------- */
+document.querySelector('nav').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;
+  document.querySelectorAll('nav button').forEach(x=>x.setAttribute('aria-selected',x===b));
+  document.querySelectorAll('section[id^=tab-]').forEach(s=>s.hidden=s.id!=='tab-'+b.dataset.tab);
+});
+/* ---------- ขายและแสดงผล (ใช้ร่วมกัน) ---------- */
+function commitSale(t,r){
+  r.items.forEach(p=>{const q=state.products.find(x=>x.id===p.id);if(q)q.stock--});
+  state.sales.unshift({t:Date.now(),tier:t.id,price:t.price,value:r.value,cost:r.cost,items:r.items.map(p=>p.name)});
+  save();
+}
+function revealHTML(t,r){
+  const groups={};r.items.forEach(p=>{groups[p.id]=groups[p.id]||{p,n:0};groups[p.id].n++});
+  return `<div class="worth">มูลค่าในกล่อง <strong class="num">${baht(r.value)}</strong> บาท
+      <div class="muted" style="font-size:.85rem">จ่ายไป ${baht(t.price)} บาท · คุ้มขึ้น ${baht(r.value-t.price)} บาท</div></div>
+    <div class="reveal">${Object.values(groups).map((g,i)=>`
+      <div class="item" style="animation-delay:${i*.12}s">
+        <div class="chip" style="background:${colorFor(g.p)}">${initial(g.p.name)}</div>
+        <div><b>${g.p.name}</b><span class="num">${g.n>1?g.n+' ชิ้น · ':''}${baht(g.p.price)} บาท</span></div>
+      </div>`).join('')}</div>`;
+}
+
+/* ---------- หน้าลูกค้า ---------- */
+if(!state.pin)state.pin='1234';
+let cTier=null,cBusy=false,cTimer=null;
+function renderCust(){
+  const sm=liveStock();
+  $('#cTiers').innerHTML=state.tiers.map(t=>{
+    const ok=!!draw(t,sm,400);
+    if(!ok&&cTier===t.id)cTier=null;
+    return `<button class="ctier" style="--c:${tierColor(t.id)}" data-t="${t.id}" aria-pressed="${t.id===cTier}" ${ok?'':'disabled'}>
+      <span class="sz">${t.id}</span><span class="pr num">${baht(t.price)} บาท</span>
+      <span class="ds">${ok?`${t.minItems}–${t.maxItems} ชิ้น`:'หมดชั่วคราว'}</span></button>`}).join('');
+  $('#cBox').style.setProperty('--c',cTier?tierColor(cTier):'var(--muted)');
+  $('#cDraw').disabled=!cTier||cBusy;
+  $('#cDraw').textContent=cTier?`สุ่มกล่อง ${cTier} เลย!`:'เลือกกล่องก่อนนะ';
+}
+function custReset(){
+  clearTimeout(cTimer);cTier=null;cBusy=false;
+  $('#cBox').className='boxwrap';$('#cResult').innerHTML='';renderCust();
+}
+$('#cTiers').addEventListener('click',e=>{
+  const b=e.target.closest('.ctier');if(!b||b.disabled||cBusy)return;
+  if($('#cBox').classList.contains('open')){$('#cBox').className='boxwrap';$('#cResult').innerHTML=''}
+  cTier=b.dataset.t;renderCust();
+});
+$('#cDraw').onclick=()=>{
+  if(cBusy||!cTier)return;
+  const t=state.tiers.find(x=>x.id===cTier),r=draw(t,liveStock());
+  if(!r){renderCust();return}
+  cBusy=true;$('#cDraw').disabled=true;$('#cResult').innerHTML='';
+  $('#cBox').className='boxwrap shake';
+  setTimeout(()=>{
+    $('#cBox').className='boxwrap open';
+    commitSale(t,r);
+    $('#cResult').innerHTML=revealHTML(t,r)+'<div class="cust-foot">หน้าจอจะกลับไปเริ่มใหม่อัตโนมัติใน 20 วินาที</div>';
+    cBusy=false;cTier=null;renderCust();renderAll(false);
+    cTimer=setTimeout(custReset,20000);
+  },1300);
+};
+let wake=null;
+function enterCust(){
+  document.body.classList.add('kiosk');$('#cust').hidden=false;$('#cPin').innerHTML='';custReset();
+  try{navigator.wakeLock?.request('screen').then(w=>wake=w).catch(()=>{})}catch(e){}
+  window.scrollTo(0,0);
+}
+function exitCust(){
+  document.body.classList.remove('kiosk');$('#cust').hidden=true;$('#cPin').innerHTML='';clearTimeout(cTimer);
+  try{wake?.release()}catch(e){}wake=null;renderAll();
+}
+$('#kioskBtn').onclick=enterCust;
+$('#openCust').onclick=enterCust;
+$('#pinSet').value=state.pin;
+$('#pinSet').addEventListener('change',e=>{
+  const v=e.target.value.trim();
+  if(/^\d{4}$/.test(v)){state.pin=v;save();toast('บันทึกรหัสแล้ว')}
+  else{e.target.value=state.pin;toast('รหัสต้องเป็นตัวเลข 4 หลัก')}
+});
+// กดค้างหัวข้อ 2 วินาทีเพื่อออก
+let holdT=null;
+const hold=()=>{holdT=setTimeout(showPin,2000)},unhold=()=>clearTimeout(holdT);
+['pointerdown'].forEach(ev=>$('#custHead').addEventListener(ev,hold));
+['pointerup','pointerleave','pointercancel'].forEach(ev=>$('#custHead').addEventListener(ev,unhold));
+$('#custHead').addEventListener('contextmenu',e=>e.preventDefault());
+function showPin(){
+  $('#cPin').innerHTML=`<form class="pinbox" id="pinForm">
+    <label style="width:100%">รหัสพนักงาน<input id="pinIn" type="password" inputmode="numeric" maxlength="4" autocomplete="off"></label>
+    <div style="display:flex;gap:8px"><button class="btn small" type="submit">เข้าหลังร้าน</button><button class="btn small ghost" type="button" id="pinCancel">ยกเลิก</button></div>
+    <div id="pinMsg" class="muted" style="font-size:.8rem"></div></form>`;
+  $('#pinIn').focus();
+  $('#pinCancel').onclick=()=>$('#cPin').innerHTML='';
+  $('#pinForm').onsubmit=e=>{e.preventDefault();
+    if($('#pinIn').value===state.pin)exitCust();
+    else{$('#pinMsg').textContent='รหัสไม่ถูกต้อง';$('#pinIn').value=''}};
+}
+
+function renderAll(withTiers=true){renderStock();renderHist();if(withTiers)renderTiers()}
+renderAll();
+enterCust();
+</script>
+
+</body>
+</html>
