@@ -78,6 +78,12 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--mustard);outlin
 @keyframes pop{to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.item{animation:none;opacity:1;transform:none}}
 .chip{flex:0 0 38px;height:38px;border-radius:10px;display:grid;place-items:center;font:600 1rem var(--display);color:#fff}
+.chip.pic{background:#fff;overflow:hidden;border:1px solid var(--line)}
+.chip.pic img{width:100%;height:100%;object-fit:cover;display:block}
+.cust .item .chip{flex-basis:56px;height:56px;border-radius:12px}
+.photo{flex:0 0 72px;width:72px;height:72px;border-radius:12px;border:2px dashed var(--line);background:var(--bg);display:grid;place-items:center;overflow:hidden;cursor:pointer;color:var(--muted);font-size:.8rem}
+.photo img{width:100%;height:100%;object-fit:cover}
+.editrow{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--line)}
 .item b{display:block;font-weight:500;font-size:.9rem;line-height:1.3}
 .item span{font-size:.8rem;color:var(--muted)}
 .worth{font:500 1.1rem var(--display);text-align:center}
@@ -198,6 +204,11 @@ body.kiosk .wrap{display:none}
     <div class="card stack">
       <h3>เพิ่มขนม</h3>
       <form class="form" id="addForm">
+        <div class="full" style="display:flex;gap:12px;align-items:center">
+          <label class="photo" for="fPhoto" id="fPhotoPrev"><span>เพิ่มรูป</span></label>
+          <input id="fPhoto" type="file" accept="image/*" hidden>
+          <span class="muted" style="font-size:.8rem">ถ่ายรูปสินค้าจริงหรือเลือกจากคลังภาพ รูปนี้จะแสดงตอนลูกค้าเปิดกล่อง</span>
+        </div>
         <label class="full">ชื่อสินค้า<input id="fName" required placeholder="เช่น ปลาเส้นทาโร่"></label>
         <label>ราคาขาย (บาท)<input id="fPrice" type="number" step="0.25" min="0" inputmode="decimal" required></label>
         <label>ต้นทุน (บาท)<input id="fCost" type="number" step="0.25" min="0" inputmode="decimal" required></label>
@@ -283,16 +294,18 @@ const SAMPLE={
     {id:10,name:'นมเปรี้ยวยาคูลท์',price:10,cost:8.2,stock:6}
   ],
   tiers:[
-    {id:'S',price:29,minItems:2,maxItems:4,minValue:32,maxValue:40,maxCost:26},
-    {id:'M',price:59,minItems:3,maxItems:6,minValue:66,maxValue:80,maxCost:53},
-    {id:'L',price:99,minItems:5,maxItems:8,minValue:112,maxValue:135,maxCost:89}
+    {id:'S',price:20,minItems:2,maxItems:3,minValue:22,maxValue:28,maxCost:18},
+    {id:'M',price:40,minItems:3,maxItems:5,minValue:44,maxValue:54,maxCost:36},
+    {id:'L',price:60,minItems:4,maxItems:7,minValue:66,maxValue:80,maxCost:54}
   ],
   sales:[]
 };
 let state;
 try{state=JSON.parse(localStorage.getItem(KEY))}catch(e){}
 if(!state||!state.products)state=JSON.parse(JSON.stringify(SAMPLE));
-const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}};
+// ปรับราคากล่องเป็น 20/40/60 บาท (ครั้งเดียว) สำหรับเครื่องที่เคยใช้ราคาเดิม
+if((state.v||1)<2){state.tiers=JSON.parse(JSON.stringify(SAMPLE.tiers));state.v=2;try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(state));return true}catch(e){toast('พื้นที่เก็บข้อมูลในเครื่องเต็ม ลองลบรูปสินค้าที่ไม่ใช้แล้ว');return false}};
 const $=s=>document.querySelector(s);
 const baht=n=>(Math.round(n*100)/100).toLocaleString('th-TH',{minimumFractionDigits:0,maximumFractionDigits:2});
 const tierColor=id=>`var(--${id.toLowerCase()})`;
@@ -325,26 +338,60 @@ const liveStock=()=>Object.fromEntries(state.products.map(p=>[p.id,p.stock]));
 
 
 /* ---------- สต็อก ---------- */
+const chipHTML=p=>p.img?`<div class="chip pic"><img src="${p.img}" alt=""></div>`:`<div class="chip" style="background:${colorFor(p)}">${initial(p.name)}</div>`;
+// ย่อรูปเป็นสี่เหลี่ยมจัตุรัส 200px ก่อนเก็บ เพื่อไม่ให้เต็มพื้นที่เครื่อง
+function readPhoto(file){
+  return new Promise((res,rej)=>{
+    if(!file)return res(null);
+    const url=URL.createObjectURL(file),im=new Image();
+    im.onload=()=>{
+      const S=200,c=document.createElement('canvas');c.width=c.height=S;
+      const g=c.getContext('2d'),k=Math.max(S/im.width,S/im.height),w=im.width*k,h=im.height*k;
+      g.fillStyle='#fff';g.fillRect(0,0,S,S);g.drawImage(im,(S-w)/2,(S-h)/2,w,h);
+      URL.revokeObjectURL(url);res(c.toDataURL('image/jpeg',.8));
+    };
+    im.onerror=()=>{URL.revokeObjectURL(url);rej(new Error('อ่านรูปไม่ได้'))};
+    im.src=url;
+  });
+}
+let editing=null;
 function renderStock(){
   const ps=state.products;
-  $('#stockSum').textContent=`${ps.length} รายการ · ${ps.reduce((a,p)=>a+p.stock,0)} ชิ้น`;
+  $('#stockSum').textContent=`${ps.length} รายการ · ${ps.reduce((a,p)=>a+p.stock,0)} ชิ้น · มีรูป ${ps.filter(p=>p.img).length}`;
   $('#stockList').innerHTML=ps.length?ps.map(p=>{
     const m=p.price?Math.round((1-p.cost/p.price)*100):0;
+    if(editing===p.id)return `<form class="editrow" data-id="${p.id}">
+      <label class="photo" for="ePhoto">${p.img?`<img src="${p.img}" alt="">`:'<span>เพิ่มรูป</span>'}</label>
+      <input id="ePhoto" type="file" accept="image/*" hidden>
+      <div class="form" style="flex:1;min-width:0">
+        <label class="full">ชื่อสินค้า<input id="eName" value="${p.name.replace(/"/g,'&quot;')}" required></label>
+        <label>ราคาขาย<input id="ePrice" type="number" step="0.25" min="0" inputmode="decimal" value="${p.price}" required></label>
+        <label>ต้นทุน<input id="eCost" type="number" step="0.25" min="0" inputmode="decimal" value="${p.cost}" required></label>
+        <div class="full" style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn small" type="submit">บันทึก</button>
+          <button class="btn small ghost" type="button" data-a="cancel">ยกเลิก</button>
+          ${p.img?'<button class="btn small ghost" type="button" data-a="rmimg">ลบรูป</button>':''}
+        </div>
+      </div></form>`;
     return `<div class="row">
-      <div class="chip" style="background:${colorFor(p)}">${initial(p.name)}</div>
+      ${chipHTML(p)}
       <div class="nm"><b>${p.name}</b><span class="num">ขาย ${baht(p.price)} · ทุน ${baht(p.cost)} · กำไร ${m}%</span>
         ${p.stock<=3?' <span class="pill low">ใกล้หมด</span>':''}</div>
       <div class="stock">
         <button data-a="dec" data-id="${p.id}" aria-label="ลด">−</button>
         <span class="num" style="min-width:2ch;text-align:center">${p.stock}</span>
         <button data-a="inc" data-id="${p.id}" aria-label="เพิ่ม">+</button>
+        <button data-a="edit" data-id="${p.id}" aria-label="แก้ไขและใส่รูป" title="แก้ไข">✎</button>
         <button data-a="del" data-id="${p.id}" aria-label="ลบ" title="ลบ">×</button>
       </div></div>`}).join(''):'<p class="muted">ยังไม่มีขนม เพิ่มรายการแรกจากฟอร์มด้านบน</p>';
 }
 let pendingDel=null;
 $('#stockList').addEventListener('click',e=>{
   const b=e.target.closest('button');if(!b)return;
-  const p=state.products.find(x=>x.id==b.dataset.id);
+  if(b.dataset.a==='cancel'){editing=null;renderStock();return}
+  if(b.dataset.a==='rmimg'){const p=state.products.find(x=>x.id===editing);delete p.img;save();renderAll();return}
+  const p=state.products.find(x=>x.id==b.dataset.id);if(!p)return;
+  if(b.dataset.a==='edit'){editing=p.id;renderStock();return}
   if(b.dataset.a==='inc')p.stock++;
   if(b.dataset.a==='dec')p.stock=Math.max(0,p.stock-1);
   if(b.dataset.a==='del'){
@@ -353,11 +400,29 @@ $('#stockList').addEventListener('click',e=>{
   }
   save();renderAll();
 });
+$('#stockList').addEventListener('change',async e=>{
+  if(e.target.id!=='ePhoto')return;
+  const p=state.products.find(x=>x.id===editing);
+  try{p.img=await readPhoto(e.target.files[0]);if(save())toast('ใส่รูปแล้ว');renderAll()}catch(err){toast('อ่านรูปไม่ได้ ลองเลือกรูปอื่น')}
+});
+$('#stockList').addEventListener('submit',e=>{
+  e.preventDefault();
+  const p=state.products.find(x=>x.id===editing);
+  p.name=$('#eName').value.trim();p.price=+$('#ePrice').value;p.cost=+$('#eCost').value;
+  editing=null;if(save())toast('บันทึกแล้ว');renderAll();
+});
+$('#fPhoto').addEventListener('change',async e=>{
+  try{const d=await readPhoto(e.target.files[0]);$('#fPhotoPrev').innerHTML=d?`<img src="${d}" alt="">`:'<span>เพิ่มรูป</span>';$('#fPhotoPrev').dataset.img=d||''}
+  catch(err){toast('อ่านรูปไม่ได้ ลองเลือกรูปอื่น')}
+});
 $('#addForm').addEventListener('submit',e=>{
   e.preventDefault();
-  const id=Math.max(0,...state.products.map(p=>p.id))+1;
-  state.products.push({id,name:$('#fName').value.trim(),price:+$('#fPrice').value,cost:+$('#fCost').value,stock:+$('#fStock').value});
-  save();e.target.reset();renderAll();toast('เพิ่มเข้าสต็อกแล้ว');
+  const id=Math.max(0,...state.products.map(p=>p.id))+1,img=$('#fPhotoPrev').dataset.img;
+  const p={id,name:$('#fName').value.trim(),price:+$('#fPrice').value,cost:+$('#fCost').value,stock:+$('#fStock').value};
+  if(img)p.img=img;
+  state.products.push(p);
+  if(save())toast('เพิ่มเข้าสต็อกแล้ว');
+  e.target.reset();$('#fPhotoPrev').innerHTML='<span>เพิ่มรูป</span>';$('#fPhotoPrev').dataset.img='';renderAll();
 });
 
 /* ---------- ตั้งค่ากล่อง ---------- */
@@ -435,7 +500,7 @@ function revealHTML(t,r){
       <div class="muted" style="font-size:.85rem">จ่ายไป ${baht(t.price)} บาท · คุ้มขึ้น ${baht(r.value-t.price)} บาท</div></div>
     <div class="reveal">${Object.values(groups).map((g,i)=>`
       <div class="item" style="animation-delay:${i*.12}s">
-        <div class="chip" style="background:${colorFor(g.p)}">${initial(g.p.name)}</div>
+        ${chipHTML(g.p)}
         <div><b>${g.p.name}</b><span class="num">${g.n>1?g.n+' ชิ้น · ':''}${baht(g.p.price)} บาท</span></div>
       </div>`).join('')}</div>`;
 }
