@@ -159,6 +159,15 @@ body.kiosk .wrap{display:none}
 .tpill .tx b{display:block;font:600 1rem var(--kanit)}
 .tpill .tx span{font-size:.75rem;color:var(--muted)}
 .hint{font:500 1rem var(--kanit);color:var(--muted)}
+/* มือถือแนวตั้ง: เรียงกล่องเป็นแถวใหญ่ ให้เต็มหน้าจอ */
+@media (max-width:640px) and (orientation:portrait){
+  .cust-in{flex:1}
+  #vPick{flex:1;justify-content:space-evenly;gap:8px}
+  .boxes{grid-template-columns:1fr;gap:4px}
+  .bx{flex-direction:row;justify-content:center;gap:18px}
+  .bx img{width:min(46vw,210px);height:calc(var(--sz)*min(23vh,190px));object-fit:contain}
+  .bx .tpill{flex:0 0 auto;min-width:148px}
+}
 /* เปิดกล่อง */
 .stagebox{position:relative;width:min(300px,74vw);aspect-ratio:1/1;max-width:100%;display:grid;place-items:end center}
 .stagebox .pile{position:relative;width:calc(var(--sz)*100%);aspect-ratio:var(--ar);animation:zoomIn .5s cubic-bezier(.3,1.5,.5,1)}
